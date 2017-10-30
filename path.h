@@ -49,9 +49,10 @@ public:
 	typedef PathVertex *        PathVertexPtr;
 
 	typedef struct RayItem {
-		RayItem() :curVertex(0), predVertex(0), predEdge(0), curDepth(0), maxDepth(-1) {}
+		RayItem() :curVertex(0), predVertex(0), predEdge(0), curDepth(0), maxDepth(-1), throughput(1.0f) {}
 		PathVertex* curVertex, *predVertex;
 		PathEdge* predEdge;
+		Spectrum throughput;
 		int curDepth, maxDepth;
 	}RayItem;
 
