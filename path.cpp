@@ -247,7 +247,6 @@ void Path::o_alternatingRandomWalkFromPixel(const Scene* scene, Sampler* sampler
 	RayItem& sdata, RayItem& tdata, Path& emitterSubpath, Path& sensorSubpath,
 	int rrStart, MemoryPool& pool) {
 
-	Spectrum throughputS(1.0f), throughputT(1.0f);
 	while (sdata.curVertex || tdata.curVertex) {
 		if (tdata.curVertex && (tdata.curDepth < tdata.maxDepth || tdata.maxDepth == -1)) {
 			PathVertex *succVertexT = pool.allocVertex();
@@ -255,7 +254,7 @@ void Path::o_alternatingRandomWalkFromPixel(const Scene* scene, Sampler* sampler
 
 			if (tdata.curVertex->sampleNext(scene, sampler, tdata.predVertex,
 				tdata.predEdge, succEdgeT, succVertexT, ERadiance,
-				rrStart != -1 && tdata.curDepth >= rrStart, &throughputT)) {
+				rrStart != -1 && tdata.curDepth >= rrStart, &tdata.throughput)) {
 				sensorSubpath.append(succEdgeT, succVertexT);
 				tdata.predVertex = tdata.curVertex;
 				tdata.curVertex = succVertexT;
@@ -278,7 +277,7 @@ void Path::o_alternatingRandomWalkFromPixel(const Scene* scene, Sampler* sampler
 
 			if (sdata.curVertex->sampleNext(scene, sampler, sdata.predVertex,
 				sdata.predEdge, succEdgeS, succVertexS, EImportance,
-				rrStart != -1 && sdata.curDepth >= rrStart, &throughputS)) {
+				rrStart != -1 && sdata.curDepth >= rrStart, &sdata.throughput)) {
 				emitterSubpath.append(succEdgeS, succVertexS);
 				sdata.predVertex = sdata.curVertex;
 				sdata.curVertex = succVertexS;
