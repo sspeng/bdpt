@@ -32,7 +32,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 MTS_NAMESPACE_BEGIN
 
-Path::RayItem sdata[NUM_RAYS], tdata[NUM_RAYS];
+Path::RayItem sdata[NUM_RAYS], tdata[NUM_RAYS], _data[NUM_RAYS * 2];
 
 /* ==================================================================== */
 /*                         Worker implementation                        */
@@ -140,10 +140,10 @@ public:
 			for (size_t j = 0; j < m_sampler->getSampleCount(); j++) {
 				if (stop) break;
 				int idx = i*m_sampler->getSampleCount() + j;
-				sdata[idx].maxDepth = emitterDepth; sdata[idx].typeSrc = true;
-				tdata[idx].maxDepth = sensorDepth; tdata[idx].typeSrc = false;
+				_data[idx * 2 + 0].maxDepth = emitterDepth; _data[idx * 2 + 0].typeSrc = true;
+				_data[idx * 2 + 1].maxDepth = sensorDepth; _data[idx * 2 + 1].typeSrc = false;
 				Path::init_alternatingRandomWalkFromPixel(m_scene, m_sampler,
-					sdata[idx], tdata[idx], m_emitterSubpath[idx], m_sensorSubpath[idx], offset, m_pool);
+					_data[idx * 2 + 0], _data[idx * 2 + 1], m_emitterSubpath[idx], m_sensorSubpath[idx], offset, m_pool);
 			}
 		}
 		for (size_t i = 0; i < m_hilbertCurve.getPointCount(); ++i) {
@@ -152,12 +152,9 @@ public:
 			for (size_t j = 0; j < m_sampler->getSampleCount(); j++) {
 				if (stop) break;
 				int idx = i*m_sampler->getSampleCount() + j;
-				/*Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler,
-					sdata[idx], tdata[idx], m_emitterSubpath[idx], m_sensorSubpath[idx],
-					m_config.rrDepth, m_pool);*/
-				while (sdata[idx].curVertex || tdata[idx].curVertex) {
-					Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, sdata[idx], m_emitterSubpath[idx], m_config.rrDepth, m_pool);
-					Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, tdata[idx], m_sensorSubpath[idx], m_config.rrDepth, m_pool);
+				while (_data[idx * 2 + 0].curVertex || _data[idx * 2 + 1].curVertex) {
+					Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, _data[idx * 2 + 0], m_emitterSubpath[idx], m_config.rrDepth, m_pool);
+					Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, _data[idx * 2 + 1], m_sensorSubpath[idx], m_config.rrDepth, m_pool);
 				}
 			}
 		}
