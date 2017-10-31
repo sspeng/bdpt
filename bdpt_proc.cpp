@@ -146,11 +146,15 @@ public:
 					_data[idx * 2 + 0], _data[idx * 2 + 1], m_emitterSubpath[idx], m_sensorSubpath[idx], offset, m_pool);
 			}
 		}
-
-		for (size_t i = 0; i < NUM_RAYS * 2; i++) {
-			if (stop) break;
-			while (_data[i].curVertex) {
+		bool canStop[NUM_RAYS * 2], mustStop[NUM_RAYS * 2];
+		memset(mustStop, 1, sizeof(mustStop));
+		memset(canStop, 0, sizeof(canStop));
+		while (memcmp(canStop, mustStop, sizeof(bool)*m_hilbertCurve.getPointCount()*m_sampler->getSampleCount()) != 0) {
+			for (size_t i = 0; i < NUM_RAYS * 2; i++) {
+				if (stop) break;
+				if (canStop[i]) continue;
 				Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, _data[i], (i % 2 == 0) ? m_emitterSubpath[i / 2] : m_sensorSubpath[i / 2], m_config.rrDepth, m_pool);
+				if (!_data[i].curVertex) canStop[i] = true;
 			}
 		}
 
