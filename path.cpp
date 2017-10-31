@@ -208,10 +208,10 @@ void Path::init_alternatingRandomWalkFromPixel(const Scene* scene, Sampler* samp
 	Path& emitterSubpath, Path& sensorSubpath,
 	const Point2i& pixelPosition, MemoryPool& pool) {
 	/* Determine the relevant edges and vertices to start the random walk */
-	sdata.curVertex = emitterSubpath.vertex(0),
-		tdata.curVertex = sensorSubpath.vertex(0),
-		sdata.predVertex = NULL, tdata.predVertex = NULL;
-	sdata.predEdge = NULL, tdata.predEdge = NULL;
+	sdata.curVertex = emitterSubpath.vertex(0);
+	tdata.curVertex = sensorSubpath.vertex(0);
+	sdata.predVertex = tdata.predVertex = NULL;
+	sdata.predEdge = tdata.predEdge = NULL;
 
 	PathVertex *v1 = pool.allocVertex(), *v2 = pool.allocVertex();
 	PathEdge *e0 = pool.allocEdge(), *e1 = pool.allocEdge();
@@ -240,6 +240,32 @@ void Path::init_alternatingRandomWalkFromPixel(const Scene* scene, Sampler* samp
 		pool.release(e1);
 		pool.release(v2);
 		tdata.curVertex = NULL;
+	}
+}
+
+void Path::o_alternatingRandomWalkFromPixel(const Scene* scene, Sampler* sampler,
+	RayItem& itm, Path& Subpath, int rrStart, MemoryPool& pool) {
+	if (itm.curVertex && (itm.curDepth < itm.maxDepth || itm.maxDepth == -1)) {
+		PathVertex *succVertex = pool.allocVertex();
+		PathEdge *succEdge = pool.allocEdge();
+
+		if (itm.curVertex->sampleNext(scene, sampler, itm.predVertex,
+			itm.predEdge, succEdge, succVertex, (itm.typeSrc ? EImportance : ERadiance),
+			rrStart != -1 && itm.curDepth >= rrStart, &itm.throughput)) {
+			Subpath.append(succEdge, succVertex);
+			itm.predVertex = itm.curVertex;
+			itm.curVertex = succVertex;
+			itm.predEdge = succEdge;
+			itm.curDepth++;
+		}
+		else {
+			pool.release(succVertex);
+			pool.release(succEdge);
+			itm.curVertex = NULL;
+		}
+	}
+	else {
+		itm.curVertex = NULL;
 	}
 }
 
