@@ -146,16 +146,11 @@ public:
 					_data[idx * 2 + 0], _data[idx * 2 + 1], m_emitterSubpath[idx], m_sensorSubpath[idx], offset, m_pool);
 			}
 		}
-		for (size_t i = 0; i < m_hilbertCurve.getPointCount(); ++i) {
-			Point2i offset = Point2i(m_hilbertCurve[i]) + Vector2i(rect->getOffset());
-			m_sampler->generate(offset);
-			for (size_t j = 0; j < m_sampler->getSampleCount(); j++) {
-				if (stop) break;
-				int idx = i*m_sampler->getSampleCount() + j;
-				while (_data[idx * 2 + 0].curVertex || _data[idx * 2 + 1].curVertex) {
-					Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, _data[idx * 2 + 0], m_emitterSubpath[idx], m_config.rrDepth, m_pool);
-					Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, _data[idx * 2 + 1], m_sensorSubpath[idx], m_config.rrDepth, m_pool);
-				}
+
+		for (size_t i = 0; i < NUM_RAYS * 2; i++) {
+			if (stop) break;
+			while (_data[i].curVertex) {
+				Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, _data[i], (i % 2 == 0) ? m_emitterSubpath[i / 2] : m_sensorSubpath[i / 2], m_config.rrDepth, m_pool);
 			}
 		}
 
@@ -165,6 +160,7 @@ public:
 			for (size_t j = 0; j < m_sampler->getSampleCount(); j++) {
 				if (stop) break;
 				int idx = i*m_sampler->getSampleCount() + j;
+
 				evaluate(result, m_emitterSubpath[idx], m_sensorSubpath[idx]);
 
 				m_emitterSubpath[idx].release(m_pool);
