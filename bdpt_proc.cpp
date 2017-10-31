@@ -123,7 +123,7 @@ public:
 			}
 		}
 
-		distribute(rect, result, emitterDepth, sensorDepth);
+		distribute(rect, result, emitterDepth, sensorDepth, stop);
 
 #if defined(MTS_DEBUG_FP)
 		disableFPExceptions();
@@ -133,14 +133,15 @@ public:
 		Assert(m_pool.unused());
 	}
 
-	void distribute(const RectangularWorkUnit* rect, BDPTWorkResult *result, int emitterDepth, int sensorDepth) {
+	void distribute(const RectangularWorkUnit* rect, BDPTWorkResult *result, int& emitterDepth, int& sensorDepth, const bool& stop) {
 		for (size_t i = 0; i < m_hilbertCurve.getPointCount(); ++i) {
 			Point2i offset = Point2i(m_hilbertCurve[i]) + Vector2i(rect->getOffset());
 			m_sampler->generate(offset);
 			for (size_t j = 0; j < m_sampler->getSampleCount(); j++) {
+				if (stop) break;
 				int idx = i*m_sampler->getSampleCount() + j;
-				sdata[idx].maxDepth = emitterDepth;
-				tdata[idx].maxDepth = sensorDepth;
+				sdata[idx].maxDepth = emitterDepth; sdata[idx].typeSrc = true;
+				tdata[idx].maxDepth = sensorDepth; tdata[idx].typeSrc = false;
 				Path::init_alternatingRandomWalkFromPixel(m_scene, m_sampler,
 					sdata[idx], tdata[idx], m_emitterSubpath[idx], m_sensorSubpath[idx], offset, m_pool);
 			}
@@ -149,11 +150,24 @@ public:
 			Point2i offset = Point2i(m_hilbertCurve[i]) + Vector2i(rect->getOffset());
 			m_sampler->generate(offset);
 			for (size_t j = 0; j < m_sampler->getSampleCount(); j++) {
+				if (stop) break;
 				int idx = i*m_sampler->getSampleCount() + j;
-				Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler,
+				/*Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler,
 					sdata[idx], tdata[idx], m_emitterSubpath[idx], m_sensorSubpath[idx],
-					m_config.rrDepth, m_pool);
+					m_config.rrDepth, m_pool);*/
+				while (sdata[idx].curVertex || tdata[idx].curVertex) {
+					Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, sdata[idx], m_emitterSubpath[idx], m_config.rrDepth, m_pool);
+					Path::o_alternatingRandomWalkFromPixel(m_scene, m_sampler, tdata[idx], m_sensorSubpath[idx], m_config.rrDepth, m_pool);
+				}
+			}
+		}
 
+		for (size_t i = 0; i < m_hilbertCurve.getPointCount(); ++i) {
+			Point2i offset = Point2i(m_hilbertCurve[i]) + Vector2i(rect->getOffset());
+			m_sampler->generate(offset);
+			for (size_t j = 0; j < m_sampler->getSampleCount(); j++) {
+				if (stop) break;
+				int idx = i*m_sampler->getSampleCount() + j;
 				evaluate(result, m_emitterSubpath[idx], m_sensorSubpath[idx]);
 
 				m_emitterSubpath[idx].release(m_pool);
