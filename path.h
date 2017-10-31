@@ -53,6 +53,7 @@ public:
 		PathVertex* curVertex, *predVertex;
 		PathEdge* predEdge;
 		Spectrum throughput;
+		bool typeSrc;
 		int curDepth, maxDepth;
 	}RayItem;
 
@@ -193,6 +194,9 @@ public:
 		RayItem& sdata, RayItem& tdata,
 		Path& emitterSubpath, Path& sensorSubpath,
 		int rrStart, MemoryPool& pool);
+
+	static void o_alternatingRandomWalkFromPixel(const Scene* scene, Sampler* sampler,
+		RayItem& itm, Path& Subpath, int rrStart, MemoryPool& pool);
 	/**
 	* \brief Verify the cached values stored in this path
 	*
